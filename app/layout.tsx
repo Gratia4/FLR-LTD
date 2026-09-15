@@ -4,6 +4,7 @@ import "./masterplan.css";
 import "./pages.css";
 import "./auth-state.css";
 import "./admin.css";
+import "./admin-pages.css";
 
 export const metadata: Metadata = {
   title: "FLR Wholesale",
