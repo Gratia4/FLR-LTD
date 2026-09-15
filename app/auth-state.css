@@ -13,3 +13,4 @@
 .registration-form fieldset:disabled { opacity:.7 }
 .registration-success strong { margin:8px 0 14px;color:#1a2e1a;font:800 18px Manrope }
 .portal-loading { min-height:100vh;display:grid;place-content:center;justify-items:center;gap:8px;color:#2e7d32 }
+.password-field{position:relative}.password-field input{padding-right:44px}.password-field button{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:31px!important;height:31px!important;margin:0!important;border:0!important;background:transparent!important;color:#667568!important;display:grid;place-items:center}.password-field button svg{width:17px}.auth-aside>small{color:#9fb8a5;font-size:8px;letter-spacing:1px;text-transform:uppercase}
