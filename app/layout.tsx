@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./masterplan.css";
 import "./pages.css";
+import "./auth-state.css";
+import "./admin.css";
 
 export const metadata: Metadata = {
   title: "FLR Wholesale",

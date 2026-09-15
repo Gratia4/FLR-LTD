@@ -9,6 +9,7 @@ import {
   Headset,
   Heart,
   List,
+  LockKey,
   MagnifyingGlass,
   Minus,
   Package,
@@ -21,7 +22,9 @@ import {
   X,
 } from "@phosphor-icons/react";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { AuthUser, readSession } from "@/lib/session";
 
 type Product = {
   id: number;
@@ -53,11 +56,20 @@ const products: Product[] = [
 const categories = ["All products", "Personal Care", "Vitamins", "Skin Care", "Medical Supplies", "Mother & Baby", "Supplements", "Hygiene"];
 
 export function Storefront() {
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All products");
   const [cart, setCart] = useState<Record<number, number>>({ 2: 1 });
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const session = readSession();
+    if (!session) router.replace("/login");
+    else { setUser(session.user); setCheckingSession(false); }
+  }, [router]);
 
   const visibleProducts = useMemo(() => products.filter((product) => {
     const matchesCategory = category === "All products" || product.category === category;
@@ -79,6 +91,8 @@ export function Storefront() {
     });
   }
 
+  if (checkingSession) return <main className="portal-loading"><LockKey size={28}/><p>Verifying secure client access…</p></main>;
+
   return (
     <div className="site-shell">
       <div className="announcement">
@@ -94,7 +108,7 @@ export function Storefront() {
             <MagnifyingGlass size={20} />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by product, brand or SKU..." />
           </label>
-          <button className="header-action account"><UserCircle size={25} /><span><small>Welcome back</small><b>Sign in / Register</b></span></button>
+          <button className="header-action account"><UserCircle size={25} /><span><small>Welcome back</small><b>{user?.businessName ?? user?.fullName}</b></span></button>
           <button className="header-action cart-button" onClick={() => setCartOpen(true)}><ShoppingCartSimple size={26} /><span><small>{cartCount} {cartCount === 1 ? "case" : "cases"}</small><b>${cartTotal.toFixed(2)}</b></span>{cartCount > 0 && <em>{cartCount}</em>}</button>
         </div>
         <nav className={menuOpen ? "open" : ""}>

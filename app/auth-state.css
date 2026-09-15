@@ -1,0 +1,15 @@
+.form-error {
+  margin: 18px 0;
+  padding: 12px 14px;
+  border: 1px solid #e4b9b9;
+  border-left: 4px solid #b3261e;
+  border-radius: 4px;
+  background: #fff4f3;
+  color: #8b1e18;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.auth-form button:disabled,.submit-registration:disabled { opacity:.65;cursor:wait }
+.registration-form fieldset:disabled { opacity:.7 }
+.registration-success strong { margin:8px 0 14px;color:#1a2e1a;font:800 18px Manrope }
+.portal-loading { min-height:100vh;display:grid;place-content:center;justify-items:center;gap:8px;color:#2e7d32 }
