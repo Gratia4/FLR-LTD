@@ -1,105 +1,175 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Buildings, MagnifyingGlass, ShoppingCart, UsersThree, Wallet, WarningCircle, X } from "@phosphor-icons/react";
-import { AdminShell } from "@/components/admin-shell";
-import { apiRequest, ApiRequestError } from "@/lib/api";
-import { useAdminSession } from "@/lib/use-admin-session";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { Buildings, MagnifyingGlass, NotePencil, ShoppingCart, UsersThree, Wallet, WarningCircle } from "@phosphor-icons/react";
+import { ConsoleShell } from "@/components/console-shell";
+import { Banner, EmptyState, Metric, SectionLabel, Sheet, SkeletonRows, StatusLabel, StatusPill, useToast } from "@/components/ui";
+import { api, errorMessage } from "@/lib/api";
+import { date, dateTime, humanise, money, moneyCompact, toneFor } from "@/lib/format";
+import { useAdminSession } from "@/lib/use-session";
 
+type Contact = { fullName: string; email: string; phone: string; jobTitle: string };
 type Client = {
   id: string; name: string; type: string; registration_number: string; tin: string; district: string; country: string;
-  status: "APPROVED" | "SUSPENDED"; credit_limit_rwf: string; payment_terms_days: number; approved_at: string | null;
-  contact: { fullName: string; email: string; phone: string; jobTitle: string }; order_count: number; lifetime_value_rwf: string;
+  status: "APPROVED" | "SUSPENDED"; credit_limit_rwf: string; payment_terms_days: number; credit_hold: boolean;
+  price_tier_id: string | null; price_tier: string | null; discount_percent: string | null; approved_at: string | null;
+  account_manager_id: string | null; account_manager_name: string | null; contact: Contact; order_count: number;
+  lifetime_value_rwf: string; last_order_at: string | null; outstanding_rwf: string; overdue_rwf: string;
+};
+type Tier = { id: string; code: string; name: string; discount_percent: string; minimum_monthly_rwf: string; is_default: boolean };
+type Manager = { id: string; full_name: string; email: string; role: string };
+type Note = { id: string; note: string; created_at: string; author_name: string | null; author_role: string | null };
+type Detail = Client & {
+  street_address: string; vat_registration_number: string | null; pharmacy_licence_number: string | null;
+  operating_licence_number: string; status_reason: string | null; assigned_account_manager_id: string | null;
+  credit: { creditLimitRwf: number; paymentTermsDays: number; creditHold: boolean; outstandingRwf: number; overdueRwf: number; availableRwf: number };
+  recentOrders: Array<{ id: string; reference: string; status: string; total_rwf: string; created_at: string }>;
+  invoices: Array<{ id: string; reference: string; status: string; total_rwf: string; amount_paid_rwf: string; due_at: string; issued_at: string }>;
+  addresses: Array<{ id: string; label: string; recipient_name: string; street_address: string; district: string; country: string; is_default: boolean }>;
+  notes: Note[];
 };
 
-const money = (value: string | number) => new Intl.NumberFormat("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 }).format(Number(value));
-
 export default function ClientsPage() {
-  const { user, token, logout } = useAdminSession();
+  const { user, logout, can } = useAdminSession();
+  const toast = useToast();
   const [clients, setClients] = useState<Client[]>([]);
-  const [search, setSearch] = useState("");
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [managers, setManagers] = useState<Manager[]>([]);
   const [selected, setSelected] = useState<Client | null>(null);
-  const [creditLimit, setCreditLimit] = useState("");
-  const [paymentTerms, setPaymentTerms] = useState("30");
-  const [status, setStatus] = useState<"APPROVED" | "SUSPENDED">("APPROVED");
-  const [reason, setReason] = useState("");
+  const [detail, setDetail] = useState<Detail | null>(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
-  const loadClients = useCallback(async () => {
-    if (!token) return;
+  const load = useCallback(() => {
     setLoading(true);
-    try {
-      const result = await apiRequest<{ data: Client[] }>("/api/v1/admin/clients", { headers: { Authorization: `Bearer ${token}` } });
-      setClients(result.data);
-    } catch (cause) {
-      setError(cause instanceof ApiRequestError ? cause.message : "Clients could not be loaded.");
-    } finally { setLoading(false); }
-  }, [token]);
+    setError("");
+    Promise.all([
+      api.get<{ data: Client[] }>("/api/v1/admin/clients"),
+      api.get<{ data: Tier[] }>("/api/v1/admin/clients/tiers"),
+      api.get<{ data: Manager[] }>("/api/v1/admin/clients/account-managers"),
+    ])
+      .then(([clientResult, tierResult, managerResult]) => {
+        setClients(clientResult.data);
+        setTiers(tierResult.data);
+        setManagers(managerResult.data);
+      })
+      .catch((cause) => setError(errorMessage(cause, "Clients could not be loaded.")))
+      .finally(() => setLoading(false));
+  }, []);
+  useEffect(load, [load]);
 
-  useEffect(() => { void loadClients(); }, [loadClients]);
+  const open = useCallback((client: Client) => {
+    setSelected(client);
+    setDetail(null);
+    setDetailLoading(true);
+    api.get<{ data: Detail }>(`/api/v1/admin/clients/${client.id}`)
+      .then((result) => setDetail({
+        ...result.data,
+        order_count: client.order_count,
+        lifetime_value_rwf: client.lifetime_value_rwf,
+        last_order_at: client.last_order_at,
+        outstanding_rwf: client.outstanding_rwf,
+        overdue_rwf: client.overdue_rwf,
+        price_tier_id: client.price_tier_id,
+      }))
+      .catch((cause) => toast.error(errorMessage(cause)))
+      .finally(() => setDetailLoading(false));
+  }, [toast]);
 
-  const openClient = (client: Client) => {
-    setSelected(client); setCreditLimit(client.credit_limit_rwf); setPaymentTerms(String(client.payment_terms_days));
-    setStatus(client.status); setReason(""); setError(""); setNotice("");
-  };
-
-  const saveClient = async () => {
-    if (!token || !selected) return;
-    setSaving(true); setError(""); setNotice("");
-    try {
-      await apiRequest(`/api/v1/admin/clients/${selected.id}`, {
-        method: "PATCH", headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ creditLimitRwf: Number(creditLimit), paymentTermsDays: Number(paymentTerms), status, reason: reason || undefined }),
-      });
-      setNotice("Client account updated successfully.");
-      await loadClients();
-      setSelected(current => current ? { ...current, credit_limit_rwf: creditLimit, payment_terms_days: Number(paymentTerms), status } : null);
-    } catch (cause) {
-      setError(cause instanceof ApiRequestError ? cause.message : "The account could not be updated.");
-    } finally { setSaving(false); }
-  };
-
-  const visible = useMemo(() => clients.filter(item => `${item.name} ${item.contact.fullName} ${item.contact.email} ${item.tin}`.toLowerCase().includes(search.toLowerCase())), [clients, search]);
+  const visible = useMemo(() => clients.filter((item) =>
+    (!filter || item.status === filter)
+    && `${item.name} ${item.contact.fullName} ${item.contact.email} ${item.tin}`.toLowerCase().includes(search.toLowerCase()),
+  ), [clients, search, filter]);
   const totalValue = clients.reduce((sum, item) => sum + Number(item.lifetime_value_rwf), 0);
 
-  return <AdminShell user={user} active="clients" onLogout={logout}>
-    <section className="admin-content">
-      <div className="admin-title"><div><h2>Wholesale clients</h2><p>Control account access, credit limits and commercial terms.</p></div></div>
-      {error && <div className="admin-error"><WarningCircle />{error}</div>}
-      {notice && <div className="admin-notice">{notice}</div>}
-      <div className="metric-grid metric-three">
-        <article><span className="green"><UsersThree /></span><div><small>Active clients</small><strong>{clients.filter(item => item.status === "APPROVED").length}</strong></div></article>
-        <article><span className="amber"><ShoppingCart /></span><div><small>Total orders</small><strong>{clients.reduce((sum, item) => sum + item.order_count, 0)}</strong></div></article>
-        <article><span className="blue"><Wallet /></span><div><small>Lifetime order value</small><strong className="metric-money">{money(totalValue)}</strong></div></article>
-      </div>
-      <section className="applications">
-        <div className="table-tools"><b className="table-title">Client directory</b><label><MagnifyingGlass /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search clients" /></label></div>
-        <div className="data-card-grid">{loading ? <div className="empty-state">Loading clients…</div> : visible.length === 0 ? <div className="empty-state">No approved clients yet.</div> : visible.map(client =>
-          <article className="client-card" key={client.id}>
-            <div className="client-card-head"><span><Buildings /></span><i className={`status ${client.status.toLowerCase()}`}>{client.status}</i></div>
-            <h3>{client.name}</h3><small>{client.type.replaceAll("_", " ")} · {client.district}</small>
-            <dl><div><dt>Contact</dt><dd>{client.contact.fullName}</dd></div><div><dt>Email</dt><dd>{client.contact.email}</dd></div><div><dt>Orders</dt><dd>{client.order_count}</dd></div><div><dt>Order value</dt><dd>{money(client.lifetime_value_rwf)}</dd></div><div><dt>Payment terms</dt><dd>{client.payment_terms_days} days</dd></div><div><dt>Credit limit</dt><dd>{money(client.credit_limit_rwf)}</dd></div></dl>
-            <button className="text-action" onClick={() => openClient(client)}>Manage account →</button>
-          </article>)}</div>
-      </section>
-    </section>
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!detail) return;
+    setSaving(true);
+    const form = new FormData(event.currentTarget);
+    const status = String(form.get("status"));
+    try {
+      await api.patch(`/api/v1/admin/clients/${detail.id}`, {
+        creditLimitRwf: Number(form.get("creditLimitRwf")),
+        paymentTermsDays: Number(form.get("paymentTermsDays")),
+        priceTierId: form.get("priceTierId") || null,
+        accountManagerId: form.get("accountManagerId") || null,
+        creditHold: form.get("creditHold") === "on",
+        status,
+        reason: status === "SUSPENDED" ? form.get("reason") || undefined : undefined,
+      });
+      toast.success("Client terms, ownership, and access updated.");
+      setSelected(null);
+      setDetail(null);
+      load();
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setSaving(false);
+    }
+  }
 
-    {selected && <div className="drawer-backdrop" onMouseDown={() => setSelected(null)}>
-      <aside className="admin-drawer" onMouseDown={event => event.stopPropagation()} aria-label="Manage client account">
-        <button className="drawer-close" onClick={() => setSelected(null)} aria-label="Close"><X /></button>
-        <span className="eyebrow">Client account</span><h2>{selected.name}</h2><p>{selected.contact.fullName} · {selected.contact.email}</p>
-        <div className="drawer-summary"><span><small>Orders</small><b>{selected.order_count}</b></span><span><small>Lifetime value</small><b>{money(selected.lifetime_value_rwf)}</b></span></div>
-        <div className="form-stack">
-          <label>Credit limit (RWF)<input type="number" min="0" value={creditLimit} onChange={event => setCreditLimit(event.target.value)} /></label>
-          <label>Payment terms<select value={paymentTerms} onChange={event => setPaymentTerms(event.target.value)}><option value="0">Due immediately</option><option value="15">15 days</option><option value="30">30 days</option><option value="45">45 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label>
-          <label>Account status<select value={status} onChange={event => setStatus(event.target.value as "APPROVED" | "SUSPENDED")}><option value="APPROVED">Active</option><option value="SUSPENDED">Suspended</option></select></label>
-          {status === "SUSPENDED" && <label>Suspension reason<textarea value={reason} onChange={event => setReason(event.target.value)} placeholder="Required for the audit trail" /></label>}
-        </div>
-        <button className="primary-action full" disabled={saving || !creditLimit} onClick={saveClient}>{saving ? "Saving…" : "Save account changes"}</button>
-      </aside>
-    </div>}
-  </AdminShell>;
+  async function addNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!detail) return;
+    const form = new FormData(event.currentTarget);
+    setSaving(true);
+    try {
+      const result = await api.post<{ data: Note }>(`/api/v1/admin/clients/${detail.id}/notes`, { note: form.get("note") });
+      setDetail({ ...detail, notes: [result.data, ...detail.notes] });
+      event.currentTarget.reset();
+      toast.success("Internal account note added.");
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ConsoleShell user={user} active="clients" onLogout={logout} can={can}>
+      <div className="page-head"><div><h1>Wholesale clients</h1><p>Manage access, ownership, contract pricing, credit exposure, and account history.</p></div></div>
+      {error && <Banner tone="error" action={<button className="btn btn-secondary" onClick={load}>Retry</button>}>{error}</Banner>}
+      <div className="metric-row cols-4">
+        <Metric icon={UsersThree} label="Active clients" value={clients.filter((item) => item.status === "APPROVED").length} />
+        <Metric icon={ShoppingCart} label="Total orders" value={clients.reduce((sum, item) => sum + item.order_count, 0)} accent="blue" />
+        <Metric icon={Wallet} label="Lifetime order value" value={moneyCompact(totalValue)} accent="gold" />
+        <Metric icon={WarningCircle} label="Overdue exposure" value={moneyCompact(clients.reduce((sum, item) => sum + Number(item.overdue_rwf), 0))} accent="danger" />
+      </div>
+      <section className="card">
+        <div className="toolbar"><label className="search-field"><MagnifyingGlass /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search business, contact, email, or TIN" /></label><select className="select" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="">All accounts</option><option value="APPROVED">Approved</option><option value="SUSPENDED">Suspended</option></select></div>
+        {loading ? <SkeletonRows /> : visible.length ? <div className="table-wrap"><table className="table"><thead><tr><th>Business</th><th>Contact / owner</th><th>Pricing</th><th className="num">Orders / value</th><th className="num">Exposure</th><th>Status</th></tr></thead><tbody>{visible.map((client) => <tr className="is-clickable" key={client.id} onClick={() => open(client)}><td><div className="cell-with-avatar"><span className="avatar-chip"><Buildings /></span><span className="cell-strong">{client.name}<span className="cell-sub">{humanise(client.type)} · TIN {client.tin}</span></span></div></td><td>{client.contact.fullName}<span className="cell-sub">{client.account_manager_name ? `FLR owner: ${client.account_manager_name}` : "No account manager"}</span></td><td>{client.price_tier || "Standard"}<span className="cell-sub">{Number(client.discount_percent || 0)}% discount · {client.payment_terms_days} days</span></td><td className="num">{client.order_count}<span className="cell-sub">{money(client.lifetime_value_rwf)}</span></td><td className="num">{money(client.outstanding_rwf)}<span className="cell-sub">{Number(client.overdue_rwf) > 0 ? `${money(client.overdue_rwf)} overdue` : "No overdue balance"}</span></td><td><StatusLabel tone={toneFor("account", client.status)} status={client.status} />{client.credit_hold && <span className="cell-sub">Credit hold</span>}</td></tr>)}</tbody></table></div> : <EmptyState icon={Buildings} title="No clients found" message="Approved wholesale partners will appear here." />}
+      </section>
+
+      {selected && <Sheet wide eyebrow="Client account" title={selected.name} subtitle={`${selected.contact.fullName} · ${selected.contact.email}`} onClose={() => { setSelected(null); setDetail(null); }} footer={detail ? <button form="client-edit" className="btn btn-primary" disabled={saving}>{saving ? "Saving…" : "Save account terms"}</button> : undefined}>
+        {detailLoading ? <SkeletonRows rows={5} /> : detail && <>
+          <div className="detail-grid"><div><small>Account status</small><b>{humanise(detail.status)}</b></div><div><small>Account manager</small><b>{detail.account_manager_name || "Unassigned"}</b></div><div><small>Credit available</small><b>{money(detail.credit.availableRwf)}</b></div><div><small>Outstanding</small><b>{money(detail.credit.outstandingRwf)}</b></div><div><small>Last order</small><b>{dateTime(detail.last_order_at)}</b></div><div><small>Approved</small><b>{date(detail.approved_at)}</b></div></div>
+          {detail.credit.overdueRwf > 0 && <Banner tone="error" title="Overdue balance">{money(detail.credit.overdueRwf)} is overdue. Ordering is automatically blocked until cleared.</Banner>}
+          <SectionLabel>Commercial terms & access</SectionLabel>
+          <form id="client-edit" className="form-grid" onSubmit={save}>
+            <label className="field"><span>Account manager</span><select className="select" name="accountManagerId" defaultValue={detail.assigned_account_manager_id ?? ""}><option value="">Unassigned</option>{managers.map((manager) => <option value={manager.id} key={manager.id}>{manager.full_name} · {humanise(manager.role)}</option>)}</select></label>
+            <label className="field"><span>Price tier</span><select className="select" name="priceTierId" defaultValue={detail.price_tier_id ?? ""}><option value="">Default pricing</option>{tiers.map((tier) => <option value={tier.id} key={tier.id}>{tier.name} · {Number(tier.discount_percent)}% discount</option>)}</select></label>
+            <label className="field"><span>Credit limit (RWF)</span><input className="input" name="creditLimitRwf" type="number" min="0" defaultValue={detail.credit_limit_rwf} required /></label>
+            <label className="field"><span>Payment terms</span><select className="select" name="paymentTermsDays" defaultValue={String(detail.payment_terms_days)}><option value="0">Prepayment</option>{[15, 30, 45, 60, 90].map((days) => <option key={days} value={days}>{days} days</option>)}</select></label>
+            <label className="field"><span>Account status</span><select className="select" name="status" defaultValue={detail.status}><option value="APPROVED">Approved</option><option value="SUSPENDED">Suspended</option></select></label><div />
+            <label className="check-line span-2"><input name="creditHold" type="checkbox" defaultChecked={detail.credit_hold} /><span>Place account on credit hold (login remains available; checkout is blocked)</span></label>
+            <label className="field span-2"><span>Suspension reason (required when suspending)</span><textarea className="textarea" name="reason" defaultValue={detail.status_reason ?? ""} /></label>
+          </form>
+
+          <SectionLabel>Internal account notes</SectionLabel>
+          <form className="note-composer" onSubmit={addNote}><textarea className="textarea" name="note" minLength={2} maxLength={2000} required placeholder="Add a private sales, service, or compliance note…" /><button className="btn btn-secondary" disabled={saving}><NotePencil /> Add note</button></form>
+          {detail.notes.length ? <div className="note-list">{detail.notes.map((note) => <article key={note.id}><p>{note.note}</p><small>{note.author_name || "Former staff member"} · {dateTime(note.created_at)}</small></article>)}</div> : <Banner tone="info">No internal notes have been added.</Banner>}
+
+          <SectionLabel>Recent orders</SectionLabel>
+          {detail.recentOrders.length ? <div className="table-wrap"><table className="table"><thead><tr><th>Order</th><th>Date</th><th className="num">Total</th><th>Status</th></tr></thead><tbody>{detail.recentOrders.map((order) => <tr key={order.id}><td className="cell-strong">{order.reference}</td><td>{date(order.created_at)}</td><td className="num">{money(order.total_rwf)}</td><td><StatusLabel tone={toneFor("order", order.status)} status={order.status} /></td></tr>)}</tbody></table></div> : <EmptyState icon={ShoppingCart} title="No orders" message="This client has not placed an order yet." />}
+          <SectionLabel>Delivery addresses</SectionLabel>
+          {detail.addresses.length ? <div className="queue-list">{detail.addresses.map((address) => <div className="queue-item" key={address.id}><span><b>{address.label}{address.is_default ? " · Default" : ""}</b><small>{address.recipient_name} · {address.street_address}, {address.district}, {address.country}</small></span>{address.is_default && <StatusPill tone="ok">Default</StatusPill>}</div>)}</div> : <Banner tone="info">No delivery addresses saved.</Banner>}
+        </>}
+      </Sheet>}
+    </ConsoleShell>
+  );
 }

@@ -3,11 +3,13 @@
 
 # Next.js build output
 /.next
+/.next-dev
 /out
 
 # local environment files
 .env*
 !.env.example
+!.env.production
 
 # system and tooling
 .DS_Store

@@ -1,14 +1,33 @@
 "use client";
-import Link from "next/link";
-import { ReactNode,useState } from "react";
-import { Bell,Buildings,ChartLineUp,Clock,FileText,FolderOpen,List,Package,SignOut,SquaresFour,Storefront,UsersThree,X } from "@phosphor-icons/react";
-import { AuthUser } from "@/lib/session";
-const groups=[
- {label:"Workspace",items:[{key:"overview",href:"/admin/overview",label:"Overview",icon:SquaresFour},{key:"dashboard",href:"/admin",label:"Applications",icon:UsersThree},{key:"clients",href:"/admin/clients",label:"Client accounts",icon:Buildings},{key:"orders",href:"/admin/orders",label:"Orders",icon:Storefront}]},
- {label:"Operations",items:[{key:"catalogue",href:"/admin/catalogue",label:"Product catalogue",icon:Package},{key:"new-product",href:"/admin/catalogue/new",label:"Add new product",icon:FileText},{key:"documents",href:"/admin/documents",label:"Documents",icon:FolderOpen},{key:"analytics",href:"/admin/analytics",label:"Analytics",icon:ChartLineUp}]},
-];
-export function AdminShell({user,active,onLogout,children}:{user:AuthUser|null;active:string;onLogout:()=>void;children:ReactNode}){
- const[open,setOpen]=useState(false);if(!user)return <main className="portal-loading"><Clock size={28}/><p>Verifying staff access…</p></main>;
- const initials=user.fullName.split(" ").map(part=>part[0]).slice(0,2).join("");
- return <div className={`admin-shell admin-v2 ${open?"nav-open":""}`}><button className="admin-mobile-shade" onClick={()=>setOpen(false)} aria-label="Close menu"/><aside className="admin-sidebar"><div className="admin-brand"><span className="admin-mountain"><i/><i/><i/></span><span><b>FLR Ltd.</b><small>Management Console</small></span><button onClick={()=>setOpen(false)} aria-label="Close navigation"><X/></button></div><nav>{groups.map(group=><section key={group.label}><small>{group.label}</small>{group.items.map(item=>{const Icon=item.icon;return <Link key={item.key} className={active===item.key?"active":""} href={item.href} onClick={()=>setOpen(false)}><Icon weight={active===item.key?"fill":"regular"}/><span>{item.label}</span>{item.key==="applications"&&<em>Review</em>}</Link>})}</section>)}</nav><div className="admin-support"><FileText/><span><b>Need assistance?</b><small>Contact technical support</small></span></div><button className="admin-signout" onClick={onLogout}><SignOut/><span>Sign out</span></button></aside><main className="admin-main"><header><button className="admin-menu" onClick={()=>setOpen(true)} aria-label="Open navigation"><List/></button><div className="admin-breadcrumb"><small>FLR Management Console</small><b>{groups.flatMap(group=>group.items).find(item=>item.key===active)?.label}</b></div><div className="admin-profile"><button className="notification" aria-label="Notifications"><Bell/><i/></button><span className="avatar">{initials}</span><span><b>{user.fullName}</b><small>{user.role.replaceAll("_"," ")}</small></span></div></header>{children}</main></div>;
+
+import type { ReactNode } from "react";
+import { ConsoleShell } from "./console-shell";
+import { can, type AuthUser } from "@/lib/session";
+
+/**
+ * Compatibility boundary for the pages that pre-date the new console shell.
+ * Keeping it small lets those screens migrate independently without leaving
+ * the application in a broken, half-renamed state.
+ */
+export function AdminShell({
+  user,
+  active,
+  onLogout,
+  children,
+}: {
+  user: AuthUser | null;
+  active: string;
+  onLogout: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <ConsoleShell
+      user={user}
+      active={active === "dashboard" ? "applications" : active}
+      onLogout={onLogout}
+      can={(area) => can(user?.role, area)}
+    >
+      {children}
+    </ConsoleShell>
+  );
 }
