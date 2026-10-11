@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Archive as ArchiveBox, ArrowClockwise, ClockCountdown, CurrencyCircleDollar, MagnifyingGlass, Package, Plus, Siren, WarningCircle } from "@phosphor-icons/react";
 import { ConsoleShell } from "@/components/console-shell";
-import { Banner, EmptyState, Metric, SectionLabel, Sheet, SkeletonRows, StatusPill, useToast } from "@/components/ui";
+import { Banner, EmptyState, Metric, SectionLabel, Sheet, SkeletonRows, StatusPill, useToast } from "@/components/legacy-ui";
 import { api, errorMessage } from "@/lib/api";
 import { count, date, dateTime, humanise, moneyCompact, relativeDate } from "@/lib/format";
 import { useAdminSession } from "@/lib/use-session";

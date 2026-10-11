@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Buildings, ChartLineUp, Repeat, ShoppingCart, TrendUp, UsersThree } from "@phosphor-icons/react";
 import { ConsoleShell } from "@/components/console-shell";
-import { Banner, EmptyState, Meter, Metric, SkeletonRows, StatusLabel, TrendChart } from "@/components/ui";
+import { Banner, EmptyState, Meter, Metric, SkeletonRows, StatusLabel, TrendChart } from "@/components/legacy-ui";
 import { api, errorMessage } from "@/lib/api";
 import { count, date, money, moneyCompact, percent, toneFor } from "@/lib/format";
 import { useAdminSession } from "@/lib/use-session";

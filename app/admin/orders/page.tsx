@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle, Clock, MagnifyingGlass, Package, Snowflake, Truck, WarningCircle } from "@phosphor-icons/react";
 import { ConsoleShell } from "@/components/console-shell";
-import { Banner, EmptyState, Metric, SectionLabel, Sheet, SkeletonRows, StatusLabel, StatusPill, useToast } from "@/components/ui";
+import { Banner, EmptyState, Metric, SectionLabel, Sheet, SkeletonRows, StatusLabel, StatusPill, useToast } from "@/components/legacy-ui";
 import { api, errorMessage } from "@/lib/api";
 import { count, date, dateTime, humanise, money, moneyCompact, toneFor } from "@/lib/format";
 import { useAdminSession } from "@/lib/use-session";

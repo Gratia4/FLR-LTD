@@ -1,13 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { ToastProvider } from "@/components/ui";
-import "./globals.css";
-import "./tokens.css";
-import "./masterplan.css";
-import "./pages.css";
-import "./auth.css";
-import "./auth-extra.css";
-import "./console.css";
-import "./admin-legacy.css";
+import { ToastProvider } from "@/components/legacy-ui";
+import "./fonts.css";
+import "./app.css";
 
 export const metadata: Metadata = {
   title: {

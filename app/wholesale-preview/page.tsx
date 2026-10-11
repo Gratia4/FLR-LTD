@@ -1,9 +1,11 @@
-import { Storefront } from "@/components/storefront";
+"use client";
 
-export const metadata = {
-  title: "FLR Wholesale Storefront Preview",
-};
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function WholesalePreviewPage() {
-  return <Storefront />;
+/** The preview catalogue moved to /wholesale; keep old links working. */
+export default function WholesalePreviewRedirect() {
+  const router = useRouter();
+  useEffect(() => router.replace("/wholesale"), [router]);
+  return null;
 }

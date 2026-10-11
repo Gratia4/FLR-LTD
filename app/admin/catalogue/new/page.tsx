@@ -4,9 +4,10 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle, Package, Plus, Trash } from "@phosphor-icons/react";
 import { ConsoleShell } from "@/components/console-shell";
-import { Banner, SectionLabel, useToast } from "@/components/ui";
+import { Banner, SectionLabel, useToast } from "@/components/legacy-ui";
 import { api, errorMessage } from "@/lib/api";
 import { useAdminSession } from "@/lib/use-session";
+import { hasPendingUploads, ImageUploader } from "@/components/admin/image-uploader";
 
 type Brand = { id: string; name: string };
 type PriceBreak = { id: number; minQuantity: string; unitPriceRwf: string };
@@ -32,6 +33,10 @@ export default function NewProductPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (hasPendingUploads(event.currentTarget)) {
+      setError("Please wait for the product images to finish uploading.");
+      return;
+    }
     setSaving(true);
     setError("");
     const form = new FormData(event.currentTarget);
@@ -102,7 +107,7 @@ export default function NewProductPage() {
           <label className="field"><span>Pack / size *</span><input className="input" name="size" required placeholder="400 ml" /></label>
           <label className="field span-2"><span>English description</span><textarea className="textarea" name="descriptionEn" rows={4} /></label>
           <label className="field span-2"><span>French description</span><textarea className="textarea" name="descriptionFr" rows={4} /></label>
-          <label className="field span-2"><span>Product image URLs</span><textarea className="textarea" name="imageUrls" rows={3} placeholder={"One HTTPS image URL per line\nhttps://example.com/product-front.jpg"} /></label>
+          <div className="field span-2"><span>Product images</span><ImageUploader name="imageUrls" disabled={!can("catalogue")} /></div>
 
           <SectionLabel>Wholesale & stock rules</SectionLabel>
           <label className="field"><span>Unit price (RWF) *</span><input className="input" name="unitPriceRwf" type="number" min="0" step="1" required /></label>

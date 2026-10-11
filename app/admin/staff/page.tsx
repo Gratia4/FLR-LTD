@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Key, Plus, ShieldCheck, UserCircle, UsersThree } from "@phosphor-icons/react";
 import { ConsoleShell } from "@/components/console-shell";
-import { Banner, EmptyState, Metric, Sheet, SkeletonRows, StatusPill, useToast } from "@/components/ui";
+import { Banner, EmptyState, Metric, Sheet, SkeletonRows, StatusPill, useToast } from "@/components/legacy-ui";
 import { api, errorMessage } from "@/lib/api";
 import { dateTime, humanise, initials } from "@/lib/format";
 import { useAdminSession } from "@/lib/use-session";

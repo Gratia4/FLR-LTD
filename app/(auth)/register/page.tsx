@@ -1,20 +1,32 @@
-"use client";
-import Link from "next/link";
-import { ArrowLeft,CheckCircle,FileArrowUp } from "@phosphor-icons/react";
-import { FormEvent,useState } from "react";
-import { apiRequest,ApiRequestError } from "@/lib/api";
+import { RegistrationWizard } from "@/components/auth/registration-wizard";
+import { MotionProvider } from "@/components/site/motion-provider";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
 
-type RegistrationResponse={reference:string;status:string;message:string};
-const uploads=[["businessRegistration","Business Registration Certificate *",true],["tinCertificate","TIN Certificate / RRA Document *",true],["pharmacyLicence","Pharmacy Licence (if applicable)",false],["operatingLicence","Operating Licence *",true],["identityDocument","National ID / Passport *",true]] as const;
+export const metadata = { title: "Register your business" };
 
-export default function RegisterPage(){
- const[result,setResult]=useState<RegistrationResponse|null>(null);const[error,setError]=useState("");const[loading,setLoading]=useState(false);
- async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setError("");const form=new FormData(event.currentTarget);if(form.get("password")!==form.get("confirmPassword")){setError("The passwords do not match.");return}form.delete("confirmPassword");setLoading(true);try{setResult(await apiRequest<RegistrationResponse>("/api/v1/registrations",{method:"POST",body:form}))}catch(cause){setError(cause instanceof ApiRequestError?cause.message:"Registration failed. Please try again.");window.scrollTo({top:0,behavior:"smooth"})}finally{setLoading(false)}}
- if(result)return <main className="registration-success"><CheckCircle/><h1>Registration request received</h1><p>{result.message}</p><strong>Reference: {result.reference}</strong><p>Keep this reference for communication with the FLR team. You can log in after your business has been approved.</p><Link href="/login">Go to login</Link></main>;
- return <main className="register-page"><header><div className="container"><Link href="/"><ArrowLeft/> Back to website</Link><b>FLR Ltd.<small>Partner Registration</small></b><Link href="/login">Already registered? Login</Link></div></header><div className="registration-heading container"><span>B2B client portal</span><h1>Register your business</h1><p>Apply for access to wholesale pricing and online ordering. Fields marked <strong>*</strong> are required.</p>{error&&<div className="form-error" role="alert">{error}</div>}</div><form className="registration-form container" onSubmit={submit}>
- <fieldset disabled={loading}><legend><span>01</span> Business Information</legend><div className="form-grid"><label>Business / Company Name *<input name="businessName" required minLength={2}/></label><label>Business Type *<select name="businessType" required defaultValue=""><option value="" disabled>Select business type</option><option value="PHARMACY">Pharmacy</option><option value="CLINIC_HOSPITAL">Clinic / Hospital</option><option value="BEAUTY_RETAILER">Beauty Retailer</option><option value="SUPERMARKET">Supermarket</option><option value="WHOLESALE_BUYER">Wholesale Buyer</option><option value="OTHER">Other</option></select></label><label>Business Registration Number *<input name="registrationNumber" required minLength={3}/></label><label>TIN Number *<input name="tin" required inputMode="numeric" pattern="[0-9]{9}" title="Enter exactly 9 digits"/></label><label>Pharmacy Licence Number<input name="pharmacyLicenceNumber" placeholder="Required for pharmacies"/></label><label>Business Operating Licence *<input name="operatingLicenceNumber" required/></label><label>VAT Registration Number<input name="vatRegistrationNumber"/></label><label>Street Address *<input name="streetAddress" required/></label><label>District *<select name="district" required defaultValue=""><option value="" disabled>Select district</option><option>Gasabo</option><option>Kicukiro</option><option>Nyarugenge</option><option>Other Rwanda District</option></select></label><label>Country *<select name="country" required defaultValue="Rwanda"><option>Rwanda</option><option>Burundi</option><option>DR Congo</option><option>Kenya</option><option>Tanzania</option><option>Uganda</option></select></label></div></fieldset>
- <fieldset disabled={loading}><legend><span>02</span> Contact Person</legend><div className="form-grid"><label>Full Name *<input name="fullName" required/></label><label>Job Title / Role *<input name="jobTitle" required/></label><label>Professional Licence Number<input name="professionalLicenceNumber" placeholder="Required for pharmacists"/></label><label>Business Email Address *<input name="email" type="email" required autoComplete="email"/></label><label>Primary Phone Number *<input name="phone" type="tel" required placeholder="+250"/></label><label>WhatsApp Number<input name="whatsapp" type="tel" placeholder="+250"/></label></div></fieldset>
- <fieldset disabled={loading}><legend><span>03</span> Account Security</legend><div className="form-grid"><label>Password *<input name="password" type="password" required minLength={8} autoComplete="new-password" pattern="(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}" title="At least 8 characters with an uppercase letter, number and symbol"/></label><label>Confirm Password *<input name="confirmPassword" type="password" required minLength={8} autoComplete="new-password"/></label></div><p className="field-help">Minimum 8 characters including an uppercase letter, number and symbol.</p></fieldset>
- <fieldset disabled={loading}><legend><span>04</span> Supporting Documents</legend><p className="field-help">PDF, JPG or PNG. Maximum 10 MB per file.</p><div className="upload-grid">{uploads.map(([field,label,required])=><label key={field}><FileArrowUp/><span>{label}</span><input name={field} type="file" accept=".pdf,.jpg,.jpeg,.png" required={required}/></label>)}</div></fieldset>
- <fieldset disabled={loading}><legend><span>05</span> Consent</legend><div className="consents"><label><input name="acceptTerms" value="true" type="checkbox" required/> I accept the FLR Ltd. wholesale Terms & Conditions. *</label><label><input name="acceptPrivacy" value="true" type="checkbox" required/> I accept the Privacy Policy and data processing terms. *</label><label><input name="acceptWholesaleAgreement" value="true" type="checkbox" required/> I understand that wholesale pricing is confidential. *</label></div></fieldset><button className="submit-registration" type="submit" disabled={loading}>{loading?"Submitting securely…":"Submit Registration Request"}</button><p className="submission-note">Applications are reviewed within 24–48 business hours.</p></form></main>
+export default function RegisterPage() {
+  return (
+    <MotionProvider>
+      <div className="min-h-screen bg-sage-50 font-sans text-sage-900 antialiased">
+        <SiteHeader />
+
+        <div className="relative isolate overflow-hidden bg-forest-900 text-white">
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(640px_320px_at_88%_45%,rgb(61_153_67/0.4),transparent_70%),radial-gradient(400px_260px_at_0%_130%,rgb(249_168_37/0.16),transparent_70%)]" />
+          <div className="mx-auto max-w-7xl px-5 pt-8 pb-20 sm:px-8 sm:pt-10">
+            <p className="text-xs font-bold tracking-[0.16em] text-gold-300 uppercase">B2B partner application</p>
+            <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">Register your business</h1>
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-forest-100/80">
+              Apply for access to wholesale pricing, live stock and online ordering. It takes about 10 minutes.
+            </p>
+          </div>
+        </div>
+
+        <main className="relative z-10 mx-auto -mt-14 max-w-7xl px-5 pb-20 sm:px-8">
+          <RegistrationWizard />
+        </main>
+        <SiteFooter />
+      </div>
+    </MotionProvider>
+  );
 }

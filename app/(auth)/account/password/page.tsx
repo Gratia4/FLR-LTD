@@ -1,9 +1,21 @@
-"use client";
+import { Suspense } from "react";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { ChangePasswordForm } from "@/components/auth/password-forms";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Key } from "@phosphor-icons/react";
-import { api, errorMessage } from "@/lib/api";
-import { clearSession } from "@/lib/session";
+export const metadata = { title: "Change password" };
 
-export default function ChangePasswordPage(){const router=useRouter();const[error,setError]=useState("");const[loading,setLoading]=useState(false);async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();const form=new FormData(event.currentTarget);if(form.get("password")!==form.get("confirm")){setError("The passwords do not match.");return;}setLoading(true);setError("");try{await api.post("/api/v1/auth/change-password",{currentPassword:form.get("currentPassword"),password:form.get("password")});clearSession();router.replace("/login");}catch(cause){setError(errorMessage(cause));}finally{setLoading(false)}}return <main className="auth-page"><section className="auth-aside"><div><span>First-time security</span><h1>Protect your FLR account.</h1><p>Replace your temporary password before entering the management console or wholesale portal.</p></div><small>FLR Ltd. · Secure Partner Portal</small></section><section className="auth-panel"><form className="auth-form" onSubmit={submit}><div className="auth-logo"><Key/></div><span>Required security step</span><h2>Change your password</h2><p>Your new password needs an uppercase letter, number and symbol.</p>{error&&<div className="form-error" role="alert">{error}</div>}<label>Current password<input name="currentPassword" type="password" required autoComplete="current-password"/></label><label>New password<input name="password" type="password" required minLength={8} autoComplete="new-password" pattern="(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}"/></label><label>Confirm new password<input name="confirm" type="password" required minLength={8} autoComplete="new-password"/></label><button type="submit" disabled={loading}>{loading?"Updating…":"Save new password"}</button></form></section></main>}
+export default function ChangePasswordPage() {
+  return (
+    <AuthShell
+      image={{ src: "/images/flr-trusted-sourcing.webp", alt: "A pharmacy technician scanning stock in the FLR warehouse" }}
+      eyebrow="Account security"
+      title="Protect your FLR account"
+      description="Replace your temporary password before entering the management console or the wholesale portal."
+      points={["Passwords are hashed and never visible to staff", "Every sign-in is role-protected"]}
+    >
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-3xl bg-sage-100" />}>
+        <ChangePasswordForm />
+      </Suspense>
+    </AuthShell>
+  );
+}

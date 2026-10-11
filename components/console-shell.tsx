@@ -32,7 +32,7 @@ import {
 } from "@phosphor-icons/react";
 import type { AuthUser } from "@/lib/session";
 import { humanise, initials } from "@/lib/format";
-import { Spinner } from "./ui";
+import { Spinner } from "./legacy-ui";
 
 type NavItem = { key: string; href: string; label: string; icon: Icon; area?: string; badge?: number };
 

@@ -1,7 +1,50 @@
-import { SubPage } from "@/components/sub-page";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, LockKey } from "@phosphor-icons/react/dist/ssr";
-import { brandPortfolio } from "@/lib/brands";
+import { Suspense } from "react";
+import { LockKeyhole, LogIn } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BrandDirectory } from "@/components/site/brand-directory";
+import { CtaBand } from "@/components/site/cta-band";
+import { PageHero } from "@/components/site/page-hero";
+import { Container } from "@/components/site/section";
 
-export default function BrandsPage(){return <SubPage eyebrow="Brand catalogue" title="Our Brand Portfolio" intro="Notre Portefeuille de Marques"><section className="brands-content container"><div className="access-notice"><LockKey/><div><b>Wholesale pricing is protected</b><p>Approved clients can sign in to view RWF prices, MOQ, case sizes, stock and ordering controls.</p></div><Link href="/login">Client Login</Link></div><div className="brand-filters"><button className="active">All</button><button>Dermocosmetics</button><button>Baby & Maternity</button><button>Wellness & OTC</button><button>Skincare</button></div><div className="portfolio-grid">{brandPortfolio.map((brand)=><article key={brand.slug}><span>{brand.tier}</span><div className={brand.wordmark ? "portfolio-logo wordmark" : "portfolio-logo"}><Image src={brand.logo} alt={`${brand.name} logo`} width={155} height={65}/></div><small>{brand.origin}</small><h2>{brand.name}</h2><p>{brand.category}</p><Link href={`/brands/${brand.slug}`}>View Brand <ArrowRight/></Link></article>)}</div></section></SubPage>}
+export const metadata = { title: "Our Brands" };
+
+export default function BrandsPage() {
+  return (
+    <>
+      <PageHero
+        eyebrow="Brand catalogue"
+        title="Our brand portfolio"
+        description="International dermocosmetic, baby care and wellness brands, distributed to verified healthcare and retail partners across Rwanda."
+        translation="Notre portefeuille de marques"
+        crumbs={[{ href: "/brands", label: "Brands" }]}
+        image={{ src: "/images/flr-care-portfolio.webp", alt: "Illustrative still life of unbranded skincare and wellness packaging in sage and ivory tones" }}
+      />
+
+      <section className="py-16 sm:py-20">
+        <Container>
+          <div className="mb-12 flex flex-col gap-5 rounded-3xl border border-gold-200 bg-gold-50 p-6 sm:flex-row sm:items-center sm:p-7">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gold-500 text-forest-950">
+              <LockKeyhole className="size-5.5" />
+            </span>
+            <div className="flex-1">
+              <h2 className="font-semibold text-forest-900">Wholesale pricing is protected</h2>
+              <p className="mt-1 text-sm leading-relaxed text-sage-700">
+                Approved clients sign in to see RWF prices, minimum order quantities, case sizes, stock and ordering.
+              </p>
+            </div>
+            <Button asChild className="self-start sm:self-auto">
+              <Link href="/login"><LogIn /> Client login</Link>
+            </Button>
+          </div>
+
+          <Suspense fallback={<div className="h-96 animate-pulse rounded-3xl bg-sage-100" />}>
+            <BrandDirectory />
+          </Suspense>
+        </Container>
+      </section>
+
+      <CtaBand />
+    </>
+  );
+}

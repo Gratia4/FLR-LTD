@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Legacy compatibility
+   Tailwind's preflight resets browser defaults that the pre-Tailwind screens
+   relied on. Inside those screens' root containers the browser defaults are
+   restored here. Delete this file once the last legacy root is rebuilt.
+   ========================================================================== */
+
+:where(.site-shell, .console, .page-loading, .toast-stack) {
+  line-height: normal;
+
+  & :where(h1) { font-size: 2em; font-weight: bold; margin-block: 0.67em; }
+  & :where(h2) { font-size: 1.5em; font-weight: bold; margin-block: 0.83em; }
+  & :where(h3) { font-size: 1.17em; font-weight: bold; margin-block: 1em; }
+  & :where(h4) { font-size: 1em; font-weight: bold; margin-block: 1.33em; }
+  & :where(h5) { font-size: 0.83em; font-weight: bold; margin-block: 1.67em; }
+  & :where(h6) { font-size: 0.67em; font-weight: bold; margin-block: 2.33em; }
+  & :where(p, dl) { margin-block: 1em; }
+  & :where(blockquote, figure) { margin: 1em 40px; }
+  & :where(dd) { margin-left: 40px; }
+  & :where(ul, ol) { margin-block: 1em; padding-left: 40px; }
+  & :where(ul) { list-style: disc; }
+  & :where(ol) { list-style: decimal; }
+  & :where(fieldset) { margin-inline: 2px; padding: 0.35em 0.75em 0.625em; border: 2px groove ThreeDFace; }
+  & :where(legend) { padding-inline: 2px; }
+  & :where(small) { font-size: smaller; }
+  & :where(img, svg, video, canvas, iframe, embed, object) { display: inline; vertical-align: baseline; }
+  & :where(img, video) { max-width: none; }
+  & :where(input, select, textarea, button) { line-height: normal; color: FieldText; }
+  & :where(input) { padding: 1px 2px; border: 2px inset light-dark(#767676, #858585); background-color: Field; }
+  & :where(textarea) { padding: 2px; border: 1px solid light-dark(#767676, #858585); background-color: Field; }
+  & :where(select) { border: 1px solid light-dark(#767676, #858585); border-radius: 4px; background-color: Field; }
+  & :where(button) { padding: 1px 6px; border: 2px outset ButtonBorder; background-color: ButtonFace; color: ButtonText; }
+  & :where(input[type="checkbox"]) { margin: 3px 3px 3px 4px; }
+  & :where(input[type="radio"]) { margin: 3px 3px 0 5px; }
+  & :where(select, textarea) { font: inherit; }
+  & :where(input::placeholder, textarea::placeholder) { color: darkgray; opacity: 1; }
+  & :where(table) { border-collapse: separate; }
+}

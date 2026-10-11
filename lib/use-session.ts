@@ -81,7 +81,7 @@ export function usePortalSession() {
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!session) router.replace("/login?next=/wholesale-preview");
+    if (!session) router.replace("/login?next=/wholesale");
     else if (session.user.role !== "CLIENT") router.replace("/admin/overview");
     else if (session.mustChangePassword) router.replace("/account/password?first=1");
   }, [session, status, router]);
@@ -93,5 +93,6 @@ export function usePortalSession() {
 /** Read-only view of the session for public pages (the storefront header). */
 export function useOptionalSession() {
   const { session, status } = useStoredSession();
-  return { user: session?.user ?? null, loading: status === "loading" };
+  const logout = useLogout();
+  return { user: session?.user ?? null, loading: status === "loading", logout };
 }

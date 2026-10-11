@@ -16,7 +16,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { ConsoleShell } from "@/components/console-shell";
-import { Banner, Bars, EmptyState, Metric, SkeletonRows, StatusLabel } from "@/components/ui";
+import { Banner, Bars, EmptyState, Metric, SkeletonRows, StatusLabel } from "@/components/legacy-ui";
 import { api, errorMessage } from "@/lib/api";
 import { count, dateTime, money, moneyCompact, toneFor } from "@/lib/format";
 import { useAdminSession } from "@/lib/use-session";

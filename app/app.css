@@ -1,0 +1,170 @@
+/* ==========================================================================
+   FLR platform stylesheet
+   Tailwind v4 + the unified FLR Ltd. brand. The pre-Tailwind stylesheets are
+   imported into a `legacy` layer that sits below components and utilities, so
+   new Tailwind markup always wins and the old screens keep working until they
+   are rebuilt. Delete each legacy import once nothing uses it.
+   ========================================================================== */
+
+@layer theme, base, legacy, components, utilities;
+
+/* Only rebuilt code is scanned, so class names in legacy screens never
+   generate stray utilities. Add each area here as it is migrated. */
+@import "tailwindcss" source(none);
+@source "../components/ui";
+@source "../components/site";
+@source "./(site)";
+@source "./(auth)";
+@source "../components/auth";
+@source "./(portal)";
+@source "../components/portal";
+@source "../components/admin";
+
+@import "tw-animate-css";
+
+@import "./globals.css" layer(legacy);
+@import "./tokens.css" layer(legacy);
+@import "./console.css" layer(legacy);
+@import "./admin-legacy.css" layer(legacy);
+@import "./legacy-compat.css" layer(legacy);
+
+/* ------------------------------ brand theme ------------------------------- */
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Forest: the brand's deep green, used for dark surfaces. */
+  --color-forest-50: #f1f6f2;
+  --color-forest-100: #dfe9e2;
+  --color-forest-200: #bfd3c5;
+  --color-forest-300: #8fb39a;
+  --color-forest-400: #5d8a6b;
+  --color-forest-500: #3c6a4b;
+  --color-forest-600: #2a5238;
+  --color-forest-700: #1b4332;
+  --color-forest-800: #173d29;
+  --color-forest-900: #10271b;
+  --color-forest-950: #0a1a11;
+
+  /* Brand green: primary actions and emphasis. */
+  --color-brand-50: #eef8ef;
+  --color-brand-100: #dcefdd;
+  --color-brand-200: #b9dfbb;
+  --color-brand-300: #8dc990;
+  --color-brand-400: #5eb864;
+  --color-brand-500: #3d9943;
+  --color-brand-600: #2e7d32;
+  --color-brand-700: #26692a;
+  --color-brand-800: #1f5422;
+  --color-brand-900: #18401b;
+
+  /* Gold: the mark's middle peak; highlights and secondary calls to action. */
+  --color-gold-50: #fff8e6;
+  --color-gold-100: #ffefc2;
+  --color-gold-200: #fde08a;
+  --color-gold-300: #fcd26b;
+  --color-gold-400: #f9b93e;
+  --color-gold-500: #f9a825;
+  --color-gold-600: #d98d0b;
+  --color-gold-700: #b07004;
+
+  /* Sky: the mark's first peak; used sparingly for informational accents. */
+  --color-sky-50: #e8f1fb;
+  --color-sky-100: #cfe2f7;
+  --color-sky-500: #1565c0;
+  --color-sky-600: #0f539f;
+
+  /* Sage: green-tinted neutrals so greys sit comfortably beside the brand. */
+  --color-sage-50: #f6f8f6;
+  --color-sage-100: #eef2ef;
+  --color-sage-200: #e2e8e3;
+  --color-sage-300: #cbd5cd;
+  --color-sage-400: #9aa79e;
+  --color-sage-500: #6c7a71;
+  --color-sage-600: #4f5c54;
+  --color-sage-700: #3a453e;
+  --color-sage-800: #242d27;
+  --color-sage-900: #142019;
+
+  --shadow-soft: 0 1px 2px rgb(16 36 24 / 0.04), 0 8px 24px -6px rgb(16 36 24 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(16 36 24 / 0.04), 0 18px 40px -12px rgb(16 36 24 / 0.18);
+
+  --animate-marquee: marquee 40s linear infinite;
+  @keyframes marquee {
+    to { transform: translateX(-50%); }
+  }
+}
+
+/* Semantic tokens used by the ui/ components. The underlying variables carry a
+   `--ui-` prefix because the legacy stylesheets already define `--muted` and
+   `--ring` with different meanings. */
+:root {
+  --radius: 0.75rem;
+  --ui-background: #ffffff;
+  --ui-foreground: var(--color-sage-900);
+  --ui-card: #ffffff;
+  --ui-card-foreground: var(--color-sage-900);
+  --ui-popover: #ffffff;
+  --ui-popover-foreground: var(--color-sage-900);
+  --ui-primary: var(--color-brand-600);
+  --ui-primary-foreground: #ffffff;
+  --ui-secondary: var(--color-sage-100);
+  --ui-secondary-foreground: var(--color-sage-900);
+  --ui-muted: var(--color-sage-100);
+  --ui-muted-foreground: var(--color-sage-500);
+  --ui-accent: var(--color-brand-50);
+  --ui-accent-foreground: var(--color-brand-800);
+  --ui-destructive: #b3261e;
+  --ui-border: var(--color-sage-200);
+  --ui-input: var(--color-sage-200);
+  --ui-ring: var(--color-brand-500);
+}
+
+@theme inline {
+  --color-background: var(--ui-background);
+  --color-foreground: var(--ui-foreground);
+  --color-card: var(--ui-card);
+  --color-card-foreground: var(--ui-card-foreground);
+  --color-popover: var(--ui-popover);
+  --color-popover-foreground: var(--ui-popover-foreground);
+  --color-primary: var(--ui-primary);
+  --color-primary-foreground: var(--ui-primary-foreground);
+  --color-secondary: var(--ui-secondary);
+  --color-secondary-foreground: var(--ui-secondary-foreground);
+  --color-muted: var(--ui-muted);
+  --color-muted-foreground: var(--ui-muted-foreground);
+  --color-accent: var(--ui-accent);
+  --color-accent-foreground: var(--ui-accent-foreground);
+  --color-destructive: var(--ui-destructive);
+  --color-border: var(--ui-border);
+  --color-input: var(--ui-input);
+  --color-ring: var(--ui-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground font-sans; }
+}
+
+/* Scroll reveal: progressive enhancement. Without scroll-timeline support (or
+   with reduced motion) `.reveal` content is simply shown in place. */
+@layer components {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        animation: reveal-in linear both;
+        animation-timeline: view();
+        animation-range: entry calc(5% + var(--reveal-shift, 0%)) entry calc(55% + var(--reveal-shift, 0%));
+      }
+    }
+  }
+}
+
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(var(--reveal-y, 24px)); }
+}
