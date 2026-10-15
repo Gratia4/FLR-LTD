@@ -50,7 +50,7 @@ export default function NewProductPage() {
     }));
 
     try {
-      await api.post("/api/v1/admin/products", {
+      const created = await api.post<{ data: { id: string } }>("/api/v1/admin/products", {
         brandId: form.get("brandId"),
         sku: form.get("sku"),
         brandReference: form.get("brandReference") || undefined,
@@ -64,7 +64,8 @@ export default function NewProductPage() {
         vatRate: Number(form.get("vatRate")),
         minimumOrderQuantity: Number(form.get("minimumOrderQuantity")),
         caseSize: Number(form.get("caseSize")),
-        stockQuantity: Number(form.get("stockQuantity")),
+        // Stock only enters through received batches, so every product starts at zero.
+        stockQuantity: 0,
         reorderLevel: Number(form.get("reorderLevel")),
         stockStatus: form.get("stockStatus"),
         shelfLifeDays: form.get("shelfLifeDays") ? Number(form.get("shelfLifeDays")) : undefined,
@@ -74,8 +75,8 @@ export default function NewProductPage() {
         isActive: form.get("isActive") === "on",
         priceBreaks: breaks,
       });
-      toast.success("Product created and published to the wholesale catalogue.");
-      window.location.assign("/admin/catalogue");
+      toast.success("Product created. Now receive its first batch to put it in stock.");
+      window.location.assign(`/admin/inventory?receive=${created.data.id}`);
     } catch (cause) {
       setError(errorMessage(cause, "Product could not be created."));
       setSaving(false);
@@ -110,13 +111,14 @@ export default function NewProductPage() {
           <div className="field span-2"><span>Product images</span><ImageUploader name="imageUrls" disabled={!can("catalogue")} /></div>
 
           <SectionLabel>Wholesale & stock rules</SectionLabel>
+          <div className="span-2"><Banner tone="info" title="Stock comes from batches">After you create the product you’ll go straight to Batches &amp; expiry to receive its first batch with a batch number and expiry date.</Banner></div>
           <label className="field"><span>Unit price (RWF) *</span><input className="input" name="unitPriceRwf" type="number" min="0" step="1" required /></label>
           <label className="field"><span>VAT rate</span><select className="select" name="vatRate" defaultValue="0.18"><option value="0.18">Standard · 18%</option><option value="0">Exempt · 0%</option></select></label>
           <label className="field"><span>Minimum order quantity *</span><input className="input" name="minimumOrderQuantity" type="number" min="1" defaultValue="1" required /></label>
           <label className="field"><span>Case size *</span><input className="input" name="caseSize" type="number" min="1" defaultValue="1" required /></label>
-          <label className="field"><span>Opening stock *</span><input className="input" name="stockQuantity" type="number" min="0" defaultValue="0" required /></label>
+          
           <label className="field"><span>Reorder alert at</span><input className="input" name="reorderLevel" type="number" min="0" defaultValue="0" /></label>
-          <label className="field"><span>Stock status *</span><select className="select" name="stockStatus" defaultValue="IN_STOCK"><option value="IN_STOCK">In stock</option><option value="LOW_STOCK">Low stock</option><option value="OUT_OF_STOCK">Out of stock</option><option value="PRE_ORDER">Pre-order</option></select></label>
+          <label className="field"><span>Availability</span><select className="select" name="stockStatus" defaultValue="IN_STOCK"><option value="IN_STOCK">Automatic · from received batches</option><option value="PRE_ORDER">Pre-order · orderable before stock arrives</option></select><small className="field-hint">In stock, low stock and out of stock are set automatically from batch quantities.</small></label>
           <label className="field"><span>Shelf life (days)</span><input className="input" name="shelfLifeDays" type="number" min="1" placeholder="730" /></label>
 
           <SectionLabel>Volume pricing</SectionLabel>
