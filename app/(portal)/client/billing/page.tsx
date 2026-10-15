@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, ErrorBanner, PageHeader, RowSkeletons, StatCard, StatSkeletons, StatusBadge } from "@/components/portal/portal-ui";
 import { api, errorMessage } from "@/lib/api";
 import type { ClientInvoice, ClientPayment } from "@/lib/client-types";
-import { date, humanise, money, moneyCompact } from "@/lib/format";
+import { date, humanise, money, moneyCompact, paymentMethod } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const ACCOUNTS_EMAIL = "accounts@flr.rw";
@@ -144,7 +144,7 @@ export default function BillingPage() {
                         <p className="text-xs text-sage-500">{payment.external_reference ?? "No external reference"}</p>
                       </td>
                       <td className="px-5 py-3.5 text-sage-600">{payment.invoice_reference ?? "Account payment"}</td>
-                      <td className="px-5 py-3.5 text-sage-600">{humanise(payment.method)}</td>
+                      <td className="px-5 py-3.5 text-sage-600">{paymentMethod(payment.method)}</td>
                       <td className="px-5 py-3.5 text-sage-600">{date(payment.received_at ?? payment.created_at)}</td>
                       <td className="px-5 py-3.5"><StatusBadge kind="payment" status={payment.status} /></td>
                       <td className="px-5 py-3.5 text-right font-semibold tabular-nums text-forest-900">{money(payment.amount_rwf)}</td>

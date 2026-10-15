@@ -41,6 +41,18 @@ export function relativeDate(value: string | Date | null | undefined) {
 export const humanise = (value: string | null | undefined) =>
   !value ? "—" : value.replaceAll("_", " ").toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
+/** Display names for the payment methods the backend accepts. */
+const PAYMENT_METHODS: Record<string, string> = {
+  MTN_MOMO: "MTN MoMo",
+  AIRTEL_MONEY: "Airtel Money",
+  BANK_TRANSFER: "Bank transfer",
+  CASH: "Cash",
+  CHEQUE: "Cheque",
+  CREDIT_NOTE: "Credit note",
+};
+
+export const paymentMethod = (value: string | null | undefined) => (value ? PAYMENT_METHODS[value] ?? humanise(value) : "—");
+
 export const initials = (name: string | null | undefined) =>
   (name ?? "")
     .split(" ")

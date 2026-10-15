@@ -36,10 +36,14 @@ export const DOCUMENTS = [
   { field: "tinCertificate", label: "TIN certificate / RRA document", description: "Issued by the Rwanda Revenue Authority", required: true },
   { field: "operatingLicence", label: "Operating licence", description: "Current business operating licence", required: true },
   { field: "identityDocument", label: "National ID or passport", description: "Of the contact person named in this application", required: true },
-  { field: "pharmacyLicence", label: "Pharmacy licence", description: "Recommended for pharmacies", required: false },
+  { field: "pharmacyLicence", label: "Pharmacy licence", description: "Required for pharmacies", required: false },
 ] as const;
 
 export type DocumentField = (typeof DOCUMENTS)[number]["field"];
+
+/** Mirrors backend/src/routes/registrations.ts: pharmacies must also upload their pharmacy licence. */
+export const isDocumentRequired = (field: DocumentField, businessType: BusinessType | undefined) =>
+  DOCUMENTS.find((document) => document.field === field)!.required || (field === "pharmacyLicence" && businessType === "PHARMACY");
 
 const file = z.custom<File>((value) => typeof File !== "undefined" && value instanceof File, "Upload this document to continue.");
 const optionalFile = file.nullable();
@@ -111,7 +115,9 @@ function crossFieldIssues(value: Registration, fields: Array<keyof Registration>
     issues.pharmacyLicenceNumber = "Required for pharmacies.";
   }
   for (const document of DOCUMENTS) {
-    if (fields.includes(document.field) && document.required && !value[document.field]) issues[document.field] = "Upload this document to continue.";
+    if (fields.includes(document.field) && isDocumentRequired(document.field, value.businessType) && !value[document.field]) {
+      issues[document.field] = document.field === "pharmacyLicence" ? "Pharmacies must upload their pharmacy licence." : "Upload this document to continue.";
+    }
   }
   if (fields.includes("confirmPassword") && value.confirmPassword && value.password !== value.confirmPassword) {
     issues.confirmPassword = "The passwords do not match.";

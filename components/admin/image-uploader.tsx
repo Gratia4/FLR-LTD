@@ -23,7 +23,7 @@ function rejectionMessage(rejection: FileRejection) {
 }
 
 /**
- * Drag-and-drop product photo uploader. Each image uploads as soon as it is
+ * Drag-and-drop catalogue image uploader (product photos, brand logos). Each image uploads as soon as it is
  * added; the resulting URLs are written to a hidden `name` field (one per
  * line), so the surrounding form submits them like any other value. While an
  * upload is in progress the root carries `data-uploading`, which forms check
@@ -34,12 +34,16 @@ export function ImageUploader({
   defaultValue = [],
   disabled = false,
   max = 8,
+  label = "product images",
 }: {
   name: string;
   defaultValue?: string[];
   disabled?: boolean;
   max?: number;
+  /** What is being uploaded, for screen readers and messages, e.g. "brand logo". */
+  label?: string;
 }) {
+  const single = max === 1;
   const [tiles, setTiles] = useState<Tile[]>(() => fromUrls(defaultValue));
   const [notice, setNotice] = useState("");
   const previews = useRef(new Set<string>());
@@ -68,7 +72,7 @@ export function ImageUploader({
       const room = Math.max(0, remaining);
       const files = accepted.slice(0, room);
       const messages = rejected.map(rejectionMessage);
-      if (accepted.length > room) messages.push(`Only ${max} images are allowed per product.`);
+      if (accepted.length > room) messages.push(single ? "Only one image can be used here." : `Only ${max} images are allowed.`);
       setNotice(messages.join(" "));
       const added = files.map((file) => {
         const preview = URL.createObjectURL(file);
@@ -85,6 +89,7 @@ export function ImageUploader({
     accept: ACCEPT,
     maxSize: MAX_MB * 1024 * 1024,
     disabled: disabled || remaining <= 0,
+    multiple: !single,
     onDrop,
   });
 
@@ -103,14 +108,14 @@ export function ImageUploader({
       <input type="hidden" name={name} value={urls.join("\n")} />
 
       {tiles.length > 0 && (
-        <ul className="m-0 grid list-none grid-cols-3 gap-3 p-0 sm:grid-cols-5 lg:grid-cols-6">
+        <ul className={cn("m-0 grid list-none gap-3 p-0", single ? "max-w-48 grid-cols-1" : "grid-cols-3 sm:grid-cols-5 lg:grid-cols-6")}>
           {tiles.map((tile, index) => (
-            <li key={tile.id} className={cn("group relative aspect-square overflow-hidden rounded-xl border bg-sage-50", tile.status === "error" ? "border-red-300" : index === 0 ? "border-brand-400 ring-1 ring-brand-300" : "border-sage-200")}>
+            <li key={tile.id} className={cn("group relative aspect-square overflow-hidden rounded-xl border bg-sage-50", tile.status === "error" ? "border-red-300" : index === 0 && !single ? "border-brand-400 ring-1 ring-brand-300" : "border-sage-200")}>
               {/* Previews are blob: URLs or catalogue CDN links, so next/image does not apply. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={tile.preview} alt={tile.name ?? `Product image ${index + 1}`} className={cn("block size-full object-contain p-2", tile.status !== "done" && "opacity-40")} />
+              <img src={tile.preview} alt={tile.name ?? (single ? label : `Image ${index + 1}`)} className={cn("block size-full object-contain p-2", tile.status !== "done" && "opacity-40")} />
 
-              {index === 0 && tile.status === "done" && (
+              {index === 0 && !single && tile.status === "done" && (
                 <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-brand-600 px-2 py-0.5 text-[11px] font-bold text-white">
                   <Star className="size-3 fill-current" /> Main
                 </span>
@@ -168,16 +173,16 @@ export function ImageUploader({
             ),
           })}
         >
-          <input {...getInputProps({ "aria-label": "Upload product images" })} />
+          <input {...getInputProps({ "aria-label": `Upload ${label}` })} />
           <span className={cn("grid size-11 shrink-0 place-items-center rounded-xl bg-white shadow-xs ring-1 ring-sage-200", isDragActive ? "text-brand-600" : "text-sage-500")}>
             <ImagePlus className="size-5" />
           </span>
           <span className="min-w-0">
             <span className="block text-sm font-medium text-forest-900">
-              {isDragActive ? "Drop the images here" : <><span className="font-semibold text-brand-700">Click to upload</span> or drag and drop</>}
+              {isDragActive ? (single ? "Drop the image here" : "Drop the images here") : <><span className="font-semibold text-brand-700">Click to upload</span> or drag and drop</>}
             </span>
             <span className="mt-0.5 block text-xs text-sage-500">
-              JPG, PNG or WebP · up to {MAX_MB} MB each · {remaining} of {max} remaining. The first image is the main photo.
+              {single ? `JPG, PNG or WebP · up to ${MAX_MB} MB` : `JPG, PNG or WebP · up to ${MAX_MB} MB each · ${remaining} of ${max} remaining. The first image is the main photo.`}
             </span>
           </span>
         </div>

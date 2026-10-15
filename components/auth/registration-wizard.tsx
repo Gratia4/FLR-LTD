@@ -42,6 +42,7 @@ import {
   REGISTRATION_STEPS,
   RWANDA_DISTRICTS,
   emptyRegistration,
+  isDocumentRequired,
   toFormData,
   validateFields,
   type Registration,
@@ -57,7 +58,7 @@ const DRAFT_KEY = "flr:registration-draft";
 const TYPE_ICONS = { PHARMACY: Store, CLINIC_HOSPITAL: Hospital, BEAUTY_RETAILER: Sparkles, SUPERMARKET: ShoppingBasket, WHOLESALE_BUYER: Package, OTHER: Building2 } as const;
 const STEP_ICONS = [Building2, MapPin, FileText, LockKeyhole, ClipboardCheck];
 /** Fields whose validity depends on another field's value. */
-const DEPENDENTS: Record<string, Array<keyof Registration>> = { businessType: ["pharmacyLicenceNumber"], password: ["confirmPassword"] };
+const DEPENDENTS: Record<string, Array<keyof Registration>> = { businessType: ["pharmacyLicenceNumber", "pharmacyLicence"], password: ["confirmPassword"] };
 
 const readDraft = (): Partial<Registration> => {
   try {
@@ -216,7 +217,7 @@ export function RegistrationWizard() {
         <div className="mt-4 hidden rounded-2xl border border-gold-200 bg-gold-50 p-5 lg:block">
           <p className="text-sm font-semibold text-forest-900">Have these ready</p>
           <ul className="mt-3 grid gap-2 text-xs text-sage-700">
-            {DOCUMENTS.filter((document) => document.required).map((document) => (
+            {DOCUMENTS.filter((document) => isDocumentRequired(document.field, values.businessType)).map((document) => (
               <li key={document.field} className="flex items-start gap-2"><CheckCircle2 className="mt-px size-3.5 shrink-0 text-gold-600" /> {document.label}</li>
             ))}
           </ul>
@@ -438,8 +439,8 @@ export function RegistrationWizard() {
                             <FileDrop
                               id={document.field}
                               label={document.label}
-                              description={document.field === "pharmacyLicence" && values.businessType === "PHARMACY" ? "Recommended for your pharmacy application" : document.description}
-                              required={document.required}
+                              description={document.field === "pharmacyLicence" && values.businessType !== "PHARMACY" ? "Only needed for pharmacies" : document.description}
+                              required={isDocumentRequired(document.field, values.businessType)}
                               file={field.value}
                               error={errors[document.field]?.message}
                               onChange={field.onChange}
